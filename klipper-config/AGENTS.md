@@ -1,8 +1,11 @@
 # AGENTS.md — klipper-config/
 
-Config Klipper **multi-MCU** (Arduino + K10) **de partida**. Diseñada para copiarse tal cual a `~/printer_data/config/`. No es la config "real" en producción.
+Dos configs independientes:
 
-> **`mk4/`** es OTRA máquina (MK4, Robin Lite de la K9, MCU única + Pi como 2ª MCU para 2× ADXL345 y DHT). Autocontenida; ver `docs/12-mk4-klipper.md`. Lo de abajo aplica solo al frankenprinter.
+- **`mk4/`** — la **MK4 en producción** (Robin Lite de la K9 + Pi como 2ª MCU para el ADXL345 por I2C y el
+  homing X/Y por choque). Copia exacta de `~/printer_data/config/` en la Pi. Ver `docs/12` y `docs/13`.
+- **Raíz (`printer.cfg` + `include/`)** — plan de fusión **CNC + cabezal K10**, multi-MCU (Arduino + K10),
+  **de partida**, no en producción. Lo de abajo aplica solo a esta.
 
 ## Layout
 
