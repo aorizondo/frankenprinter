@@ -25,10 +25,17 @@ Repos hermanos (no confundir):
 | Ruta | Qué es |
 |------|--------|
 | `/home/antonio/Desarrollo/solverius/3dprinter/` (**este repo**) | frankenprinter. `repos/` (gitignored) tiene los repos hermanos y clones de referencia |
-| `/home/antonio/Documentos/Hobby/Maker/` (no-git) | Modelos STL/3MF, CAD WIP, CAM. **No commitear** aquí |
-| `/home/antonio/Programas/3d_print/` (no-git) | Cura AppImage, venv Poetry con OctoPrint 1.11 (`.venv`). No tocar como código |
+| `/home/antonio/Documentos/Hobby/Maker/` (no-git, assets) | `3DPrinting/` (STL/3MF, `marlin comands.txt`, perfiles Cura/Prusa heredados, fotos del cabezal), `CAD/` (SCAD/SolveSpace WIP: cooler, disipadores, antena), `CAM/toolbits/` (FreeCAD Path), `CNC/proyecto cnc/`, `Electronics/`. **No commitear** a ningún repo |
+| `/home/antonio/Programas/3d_print/` (no-git, tooling) | Cura 5.13 AppImage + `cura-5.13/`, venv Poetry con OctoPrint 1.11 (`.venv`, Python 3.13), `backlash_compensator.py`, `cura_profiles/`, firmware OEM `easythreed k9/`, `lite_cfg.txt`. No tocar como código |
 
 Validar con Antonio antes de mover cosas entre ellos (referencias cruzadas frágiles).
+
+## Qué máquina es "la impresora"
+
+- **MK4** (esta, Klipper, Pi `mk4.local`): la que funciona hoy. "La impresora" sin más = MK4.
+- **MK3**: la misma base con Marlin (rama `mk3-marlin`), sustituida por la MK4.
+- **K9 / K10 de serie**: repo `EasyThreed-K9-K10`. La placa de la K9 de Antonio está ahora en la MK4.
+- **K10** en este repo: solo como cabezal del plan de fusión con el CNC.
 
 ## MK4 (Klipper) — comandos no obvios
 
@@ -66,9 +73,18 @@ avrdude -c arduino -p atmega328p -P /dev/ttyACM0 -b 115200 -D -U flash:w:grbl.he
 
 ```bash
 cd cad && ./build.sh           # stl/ (gitignored) + renders/ (versionados)
+openscad -D 'part="body"' -o out.stl k10_enclosure.scad   # una sola pieza (body, lid, assembly)
 ```
+Requiere `openscad` + `xvfb-run`. El script avisa si una pieza no es 2-manifold (no falla): revisa la salida.
 Tornillería M3, `FIT=0.30`, PETG sin cama caliente (brim). `cad/adxl345_k9_mount.scad`: no modificar sin
 pedirlo (decisión de Antonio).
+
+## Validar una MCU desde el PC
+
+```bash
+repos/klipper/.venv-klippy/bin/python repos/klipper/klippy/console.py [-b 250000] <dev>
+```
+El venv `repos/klipper/.venv-klippy` (Python 3.12) es del clon de Klipper, no del proyecto.
 
 ## Repos de terceros
 
@@ -81,3 +97,18 @@ está en `repos/`**; clones nuevos van en `repos/`, nunca en `/tmp`.
   documento vivo del CNC/fusión; `13-manual-mk4.md` el manual de la MK4.
 - Commits en español, `tipo: descripción`.
 - `SAVE_CONFIG` reescribe el bloque `#*#` de `printer.cfg`: no editarlo a mano.
+
+## Recursos externos / memoria
+
+- Investigación temática de Antonio: `/home/antonio/Documentos/Business/Solverius/Research/3D-Printing-CAD/`
+  (COMPAS, BRL-CAD, Obico, AliceVision, FullControl, Kiri:Moto). Consultar antes de proponer herramientas.
+- Memoria del agente: `/home/antonio/.claude/projects/-home-antonio-Desarrollo-solverius-3dprinter/memory/`.
+- Referencias externas en `reference/` (URLs, notas, fotos).
+
+## Qué evitar
+
+- **No regenerar `cad/stl/`** y commitearlo (gitignored a propósito).
+- **No commitear** assets de `Maker/` ni nada de `Programas/3d_print/`.
+- **No meter aquí nada de las K9/K10 de serie ni de los plugins**: van a sus repos.
+- **No editar a mano** el bloque `#*# SAVE_CONFIG` ni desincronizar `klipper-config/mk4/` de la Pi.
+- **No reiniciar OctoPrint ni Klipper** con una impresión en curso.
