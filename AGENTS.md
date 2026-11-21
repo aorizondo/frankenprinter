@@ -1,109 +1,83 @@
-# AGENTS.md — Frankenprinter R&D workspace
+# AGENTS.md — frankenprinter (serie MK + CNC)
 
-Repo identity: I+D personal de Antonio para fusionar una **EasyThreed K10** + un **CNC casero (Arduino Uno + CNC Shield V3)** bajo **Klipper multi-MCU**. Estado: documentación + configs de partida, no producto. Repo público: `aorizondo/EasyThreed-K10-Klipper`.
+Repo identity: I+D personal de Antonio. **La frankenprinter es la serie MK**: máquinas a medida con la
+placa (MKS Robin Lite, STM32F103RC), los brazos Z y el cabezal de una **EasyThreed K9**, más mecánica
+propia. MK3 = Marlin (rama `mk3-marlin`), **MK4 = Klipper** (rama `main`, `klipper-config/mk4/`).
+**Función extra**: CNC casero (Arduino Uno + CNC Shield) y plan de fusión K10+CNC con Klipper multi-MCU
+(docs 00–11). Repo público: `aorizondo/frankenprinter`.
 
-## Lee primero (en este orden)
+Repos hermanos (no confundir):
+- **`aorizondo/EasyThreed-K9-K10`** — K9/K10 **de serie**: Marlin K9 (rama `marlin`, CI → `mksLite.bin`),
+  Klipper K9 y **hack USB de la K10** (rama `klipper`, CI → `p10_printer.bin`), `main` une ambas.
+  Clon local: `repos/EasyThreed-K9-K10/`. Aquí NO va nada de la MK.
+- **`aorizondo/OctoPrint-BoostKit`** y **`aorizondo/OctoPrint-ZPreload`** — plugins OctoPrint.
+  Clones locales: `repos/OctoPrint-BoostKit/`, `repos/OctoPrint-ZPreload/`.
 
-1. `README.md` — visión y diagrama del repo.
-2. `docs/11-estado-y-handoff.md` — **estado real** y vivo (no `docs/00–10`, que es el plan). Aquí está qué hitos están conseguidos, qué hardware confirmado, settings GRBL actuales y por qué hay un "giro temporal a GRBL".
-3. `docs/00-RESUMEN-EJECUTIVO.md` — matriz de decisión K10-soldar-UART vs alternativa pragmática.
-4. `firmware/cnc/grbl-setup.md` — settings GRBL **calibrados** vigentes (no editar a ciegas: ver "Hardware sticky facts" abajo).
+## Lee primero
 
-## Los tres workspaces (no están enlazados, pero son el mismo proyecto)
+1. `README.md` — qué es cada máquina y dónde está.
+2. **MK4**: `docs/12-mk4-klipper.md` (migración, decisiones) y `docs/13-manual-mk4.md` (uso diario).
+3. **CNC / fusión**: `docs/11-estado-y-handoff.md` (estado real), `docs/00-RESUMEN-EJECUTIVO.md`,
+   `firmware/cnc/grbl-setup.md` (settings GRBL calibrados vigentes).
 
-Antonio trabaja desde tres rutas separadas. Cuando una tarea hable de "los modelos", "el slicer" o "el plugin", deduce de cuál se trata:
+## Workspaces (no enlazados, mismo ecosistema)
 
-| Ruta | Qué es | Uso típico |
-|------|--------|-----------|
-| `/home/antonio/Desarrollo/solverius/3dprinter/` (**este repo, git**) | I+D: docs, configs Klipper/GRBL, CAD paramétrico de enclosures, plugin OctoPrint (`octoprint-k9suite`), perfil Cura K9 (`cura-k9-profile`), firmware CI | Cambios versionados. Aquí van docs, código y configs. |
-| `/home/antonio/Documentos/Hobby/Maker/` (**no-git, assets**) | `3DPrinting/` (modelos STL/3MF, `marlin comands.txt`, perfiles Cura/Prusa heredados, fotos del cabezal), `CAD/` (SCAD/SolveSpace WIP de utilitarios: cooler, disipadores, antena), `CAM/toolbits/` (FreeCAD Path), `CNC/proyecto cnc/`, `Electronics/` (Labrador) | Diseño 3D y CAM. **No commitear** a este repo; queda como sandbox personal. |
-| `/home/antonio/Programas/3d_print/` (**no-git, tooling**) | Cura 5.13 AppImage + `cura-5.13/` config dir, Poetry `.venv` con OctoPrint 1.11, `backlash_compensator.py`, `CuraEngine_plugin_infill_generate/`, `cura_profiles/`, firmware OEM `easythreed k9/`, `lite_cfg.txt` | **Aquí vive el venv y OctoPrint que corre la K9.** No tocar como código fuente. |
+| Ruta | Qué es |
+|------|--------|
+| `/home/antonio/Desarrollo/solverius/3dprinter/` (**este repo**) | frankenprinter. `repos/` (gitignored) tiene los repos hermanos y clones de referencia |
+| `/home/antonio/Documentos/Hobby/Maker/` (no-git) | Modelos STL/3MF, CAD WIP, CAM. **No commitear** aquí |
+| `/home/antonio/Programas/3d_print/` (no-git) | Cura AppImage, venv Poetry con OctoPrint 1.11 (`.venv`). No tocar como código |
 
-Antonio quiere mejor organización entre los tres → si propones mover cosas, valida con él antes (existen referencias cruzadas frágiles: el plugin se instala desde el venv de `Programas/3d_print`).
+Validar con Antonio antes de mover cosas entre ellos (referencias cruzadas frágiles).
 
-## Comandos no-obvios
+## MK4 (Klipper) — comandos no obvios
 
-### CAD (OpenSCAD)
+- Host: Raspberry Pi 4 → **`ssh antonio@mk4.local`**; para trabajar en la Pi usar la sesión tmux **`mk4`**.
+- Config en `klipper-config/mk4/` = copia exacta de `~/printer_data/config/` en la Pi. Tras editar:
+  `scp` a la Pi y `FIRMWARE_RESTART` (o `sudo systemctl restart klipper`). Repo y Pi deben quedar iguales.
+- `klipper-config/mk4/extras/*.py` van **enlazados** en `~/klipper/klippy/extras/` (y en
+  `.git/info/exclude` de `~/klipper` para que Moonraker no lo marque *dirty*).
+- Red de la Pi: `klipper-config/mk4/host/` (servicio `mk4-red`, archivo `/boot/firmware/mk4-red.txt`).
+- Firmware de la Robin Lite: se compila **en la Pi** con el parche `firmware/mk4/robin-lite-vectors-first.patch`
+  (docs/12 §5). Sin parche el bootloader rechaza Klipper ≥ v0.11.
+- Gotcha Klipper: nombres de comando con letra+dígito al principio (`G28_ACCEL`, `M907_X`) son inválidos.
 
-```bash
-cd cad && ./build.sh           # genera stl/ + renders/ de todas las cajas
-```
-Requiere `openscad` + `xvfb-run`. Los `cad/stl/` están **gitignored** (regenerables); los `cad/renders/*.png` **sí se versionan** como referencia visual. El script avisa si una pieza no es 2-manifold (no falla, sólo imprime); revisa la salida.
+## MK4 — hechos de hardware (no deducibles del código)
 
-Una sola pieza: `openscad -D 'part="body"' -o out.stl k10_enclosure.scad` (parts: `body`, `lid`, `assembly`).
+- **Sin finales de carrera X/Y**: homing por choque con el ADXL345 (INT1 → GPIO17, `extras/accel_endstop.py`,
+  `HOME_ACCEL`). Umbrales calibrados a 15 mm/s: X 3 g, Y 1.5 g. Y exige **correas Y igual de tensas**.
+  `G28.1 X/Y` está prohibido (buscaría switches retirados).
+- ADXL345 por **I2C de la Pi** (`extras/adxl345_i2c.py`), no SPI: los módulos que hay no van por SPI.
+- Y con 2 motores en un driver; Z con 2 brazos K9 en un driver (sin Z_TILT). Sonda Z de despliegue manual.
 
-### Firmware K10 (Klipper)
+## CNC (función extra) — comandos no obvios
 
-**No hay toolchain ARM local.** Se compila en GitHub Actions: `.github/workflows/build-k10-klipper.yml`. Disparo: pestaña Actions → "Build K10 Klipper firmware" → Run workflow, o push a `firmware/k10/klipper.config`. El workflow fija `KLIPPER_COMMIT=4c137ed3...` (no lo bumpees sin probar) y verifica que el ELF se enlaza en `0x08004000` y cabe en 112 KB. Artefacto descargable: `p10_printer.bin`.
-
-### Firmware CNC (GRBL o Klipper, en paralelo)
-
-GRBL (modo actual) — toolchain AVR sí está local:
+GRBL (modo actual), toolchain AVR local:
 ```bash
 cd repos/grbl && make
 avrdude -c arduino -p atmega328p -P /dev/ttyACM0 -b 115200 -D -U flash:w:grbl.hex:i
 ```
-Klipper-en-Arduino (vía paralela documentada): `firmware/cnc/klipper.config` + `repos/klipper-drawbot` como referencia.
+- **GRBL calibrado**: `$100=$101=75.83`, `$102=2226`, `$3=4`, `$110=$111=10000`, `$120=$121=1200`,
+  `$112=200`, `$122=8`. No editar a ciegas (`firmware/cnc/grbl-setup.md`).
+- Doble motor Y por jumpers de clonado (socket A). Si se pasa a Klipper: quitarlos y `[stepper_y1]`.
+- Sin endstops: homing manual. PWM spindle/láser libre en D9/D10/D11.
 
-### Repos de terceros
-
-`repos/` está **gitignored**. Reconstruir con `./scripts/clone-references.sh` (clones shallow de klipper, moonraker, kiauh, klipper-drawbot, ECF-Marlin, EasyThreeD-K9-STM32). Si falta `repos/grbl/`, hay que clonarlo aparte (`gnea/grbl`, no está en el script).
-
-### Validar MCU desde el host
+## CAD (OpenSCAD)
 
 ```bash
-repos/klipper/.venv-klippy/bin/python repos/klipper/klippy/console.py [-b 250000] <dev>
+cd cad && ./build.sh           # stl/ (gitignored) + renders/ (versionados)
 ```
-El venv `repos/klipper/.venv-klippy` (Python 3.12 + pyserial/greenlet/cffi) es propio del repo Klipper, no del proyecto.
+Tornillería M3, `FIT=0.30`, PETG sin cama caliente (brim). `cad/adxl345_k9_mount.scad`: no modificar sin
+pedirlo (decisión de Antonio).
 
-### Plugin OctoPrint (`octoprint-k9suite`, paquete `octoprint_boostkit`)
+## Repos de terceros
 
-**El venv de OctoPrint vive FUERA de este repo**, en `/home/antonio/Programas/3d_print/.venv` (Poetry, Python 3.13):
-```bash
-/home/antonio/Programas/3d_print/.venv/bin/pip install -e /home/antonio/Desarrollo/solverius/3dprinter/octoprint-k9suite
-/home/antonio/Programas/3d_print/.venv/bin/octoprint serve
-```
-Reiniciar OctoPrint **aborta** la impresión en curso → hazlo siempre con la impresora libre. Modo editable: cambios JS/CSS recargan en navegador, cambios Python requieren reiniciar.
+`repos/` gitignored. Reconstruir con `./scripts/clone-references.sh`. **No descargar copias de lo que ya
+está en `repos/`**; clones nuevos van en `repos/`, nunca en `/tmp`.
 
-### Perfil Cura K9
+## Convenciones
 
-`cura-k9-profile/` se instala copiando a `~/.local/share/cura/5.13/{definitions,extruders,quality,materials,variants}` (ver su README). El Start G-code **no hace homing** (asume homing manual previo desde OctoPrint).
-
-## K9 ≠ K10 (distinción crítica)
-
-Hay dos impresoras EasyThreed en juego y un agente las confunde fácilmente:
-
-- **K9** (ET4000PLUS): impresora **existente y operativa** con Marlin 2.1 personalizado (EMERGENCY_PARSER, UBL, LIN_ADV). Cama 100×100×100, sin cama caliente. El **plugin OctoPrint** (`octoprint-k9suite`) y el **perfil Cura** (`cura-k9-profile`) son para ESTA. Bootloader busca `mksLite.bin`.
-- **K10**: placa donante del **proyecto frankenprinter** (en construcción). MCU GD32F303CBT6 (no STM32 oficial), USB-C **sólo alimentación**, sin chip USB-serie. Bootloader busca `p10_printer.bin` en offset `0x4000`. Compilación SOLO por CI.
-
-Si el usuario dice "la impresora" sin más, suele referirse a la K9 (la que funciona). Para el K10 nombra ambos.
-
-## Hardware sticky facts (no deducibles del código)
-
-- **GRBL calibrado**: `$100=$101=75.83`, `$102=2226`, `$3=4` (Z invertido), `$110=$111=10000 mm/min`, `$120=$121=1200 mm/s²`, `$112=200`, `$122=8`. Eje Z: **2226 steps/mm** porque el tornillo avanza ~1.44 mm/vuelta (no 2 mm). Backlash ≈ 0.55 mm sin compensar. Vref Z = 0.71 V (menos pierde pasos al subir).
-- **Doble motor Y por hardware**: jumpers de clonado del socket A están puestos en Y. GRBL ve 3 ejes. Si pasamos a Klipper, hay que **quitar esos jumpers** y declarar `[stepper_y1]` en software.
-- **Sin endstops en ningún eje**: homing manual antes de cada trabajo; macro G28 usa `SET_KINEMATIC_POSITION`. A4988 no soporta sensorless.
-- **Motores X/Y reciclados de Epson LX**, NEMA17 unipolar STP-42D221-01 (200 pasos/vuelta). El motor X **necesita recableado a bipolar** antes de fiarse de su calibración (Y ya está hecho).
-- **Firmware OEM K10** (`firmware/k10/stock/*.bin`): propietario, gitignored, **no redistribuir**. Es el "billete de vuelta a fábrica".
-- **PWM spindle/láser libre** en D9/D10/D11 (D12/D13 ocupados por 2º Y si se va a Klipper).
-
-## Convenciones del repo
-
-- Docs en **español**, numeradas (`docs/NN-tema.md`). El doc `11-estado-y-handoff.md` es el único que se actualiza con fecha.
-- Commits en español, formato `tipo: descripción` (ver `git log`: `docs:`, `feat:`, etc.).
-- CAD: tornillería M3 estándar, `FIT=0.30 mm` por defecto, ventiladores con tamaños estándar (lib lo expone). PETG sin cama caliente → diseñar para brim/orejas.
-- Firmware K10 OEM en `.bin`/`.dump`/`disasm.txt` gitignored; los hashes van en su README.
-
-## Recursos externos / memoria
-
-- Investigación temática estructurada del usuario: `/home/antonio/Documentos/Business/Solverius/Research/3D-Printing-CAD/` (COMPAS, BRL-CAD, Obico, AliceVision, FullControl, Kiri:Moto). Consultar antes de proponer herramientas nuevas.
-- Memoria del agente: `/home/antonio/.acp-model-provider/claude-config/projects/-home-antonio-Desarrollo-solverius-3dprinter/memory/` — usar `hindsight_recall` para sesiones previas (hay 20+ memorias sobre este proyecto).
-- Referencias técnicas externas guardadas en `reference/` (URLs y notas; `images/` incluye fotos del cabezal/PCB).
-
-## Qué evitar
-
-- **No bumpear `KLIPPER_COMMIT`** del workflow sin replicar el build localmente con el toolchain ARM (no instalado en esta máquina).
-- **No regenerar `cad/stl/`** y commitearlo (gitignored a propósito).
-- **No commitear** assets de `/home/antonio/Documentos/Hobby/Maker/` ni nada de `/home/antonio/Programas/3d_print/` a este repo.
-- **No "limpiar"** `firmware/k10/stock/`: aunque parezca redundante, es el respaldo OEM.
-- **No reordenar** `docs/00..11`: el orden numérico es parte del índice del README.
+- Docs en español, numeradas `docs/NN-tema.md` (no reordenar 00–13). `11-estado-y-handoff.md` es el
+  documento vivo del CNC/fusión; `13-manual-mk4.md` el manual de la MK4.
+- Commits en español, `tipo: descripción`.
+- `SAVE_CONFIG` reescribe el bloque `#*#` de `printer.cfg`: no editarlo a mano.

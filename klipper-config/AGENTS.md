@@ -31,6 +31,6 @@ moonraker.conf           # API server
 
 ## Si tocas algo
 
-1. Cualquier cambio en pines K10 implica leer **`../firmware/k10/AGENTS.md`** primero (hay pines OEM sin resolver).
+1. Cualquier cambio en pines K10 implica leer **`klipper/firmware/k10/AGENTS.md` del repo [EasyThreed-K9-K10](https://github.com/aorizondo/EasyThreed-K9-K10)** primero (hay pines OEM sin resolver).
 2. Cambios de step-rate o microstepping: revisar `../firmware/cnc/AGENTS.md` (límite hardware ATmega328P).
 3. **Acelerómetro host** opcional para input shaping está pre-cableado y comentado en `mcu-cnc.cfg` (sección `[mcu rpi]` + `[adxl345]` + `[resonance_tester]`). Descomentar requiere instalar `klipper_mcu` en la Pi.

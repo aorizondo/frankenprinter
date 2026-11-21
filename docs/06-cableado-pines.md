@@ -1,7 +1,7 @@
 # 06 — Cableado y pinout (referencia rápida)
 
 Tabla maestra de conexiones. Los pines de la K10 marcados con `??` se rellenan tras el
-[reversing](10-reversing-pinout-k10.md).
+[reversing](https://github.com/aorizondo/EasyThreed-K9-K10/blob/main/klipper/docs/10-reversing-pinout-k10.md).
 
 ---
 
@@ -37,7 +37,7 @@ en software es cablear bien; el sentido se ajusta con `!` en `dir_pin`.
 | Calefactor hotend | k10:P?? | gate del MOSFET HY1403 (reversing) |
 | Termistor (ADC) | k10:P?? | divisor del termistor (reversing) |
 | Fan de capa | k10:P?? | salida fan (reversing) |
-| UART al host | — | PA9(TX)/PA10(RX)/GND → adaptador USB-TTL (ver [04](04-soldadura-uart-k10.md)) |
+| UART al host | — | PA9(TX)/PA10(RX)/GND → adaptador USB-TTL (ver [04](https://github.com/aorizondo/EasyThreed-K9-K10/blob/main/klipper/docs/04-soldadura-uart-k10.md)) |
 
 Cabezal de la K10 = hotend + cartucho calefactor + termistor + motor extrusor + fan. Se quedan **en su
 placa**; solo añades el UART y, si hace falta, recableas el fan a un pin controlable.
@@ -58,7 +58,7 @@ placa**; solo añades el UART y, si hace falta, recableas el fan a un pin contro
   común, la comunicación serie falla y los ADC dan lecturas erráticas.
 - **Alimentaciones de potencia separadas** de la lógica (la Pi por su fuente de 5 V/3 A; los motores y el
   calefactor por sus fuentes).
-- No mezcles 5 V y 3.3 V en líneas de señal hacia el GD32 (UART/ADC) — ver [04](04-soldadura-uart-k10.md).
+- No mezcles 5 V y 3.3 V en líneas de señal hacia el GD32 (UART/ADC) — ver [04](https://github.com/aorizondo/EasyThreed-K9-K10/blob/main/klipper/docs/04-soldadura-uart-k10.md).
 
 ---
 

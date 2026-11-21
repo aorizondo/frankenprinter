@@ -30,13 +30,13 @@ Frankenprinter: fusionar el **cabezal de una EasyThreed K10** + la **mecánica d
      (`p10_printer.bin` → bootloader lo acepta y renombra a `.CUR`, offset 0x4000).
    - Enumera `1d50:614e`, comunica (console.py, get_uptime ok). CLOCK_FREQ=72 MHz.
    - `by-id`: `usb-Klipper_stm32f103xe_30303B4D1C20300836303638-if00`.
-   - Config: [`firmware/k10/klipper.config`](../firmware/k10/klipper.config).
+   - Config: [`firmware/k10/klipper.config`](https://github.com/aorizondo/EasyThreed-K9-K10/blob/main/klipper/firmware/k10/klipper.config).
 2. **Arduino (CNC) con Klipper — flasheado y validado** (con `HARD_PWM`). 14 KB/32 KB.
    - `by-id`: `usb-Arduino__www.arduino.cc__0043_7573530303135180C070-if00`. Serial 250000.
    - Config: [`firmware/cnc/klipper.config`](../firmware/cnc/klipper.config).
 3. **Firmware OEM de fábrica de la K10 — respaldado** (billete de vuelta a fábrica).
    - Fuente: palmarci. `firmware/k10/stock/` (gitignorado, propietario) + README con hashes.
-4. **Reversing del firmware OEM** ([`firmware/k10/reversing.md`](../firmware/k10/reversing.md)):
+4. **Reversing del firmware OEM** ([`firmware/k10/reversing.md`](https://github.com/aorizondo/EasyThreed-K9-K10/blob/main/klipper/firmware/k10/reversing.md)):
    - Steps/mm K10: X606 Y606 Z600 E1040; PID hotend Kp22.2/Ki1.08/Kd114; botones S3–S9.
    - Mapa de pines (38 agentes): PA2=termistor, PA3=endstop, PA5/6/7=SPI, teclado en PB*,
      PWM PB4/5/6/7/8. **Sin resolver: pin del HEATER** (soft-PWM vía tabla RAM) y eje de cada stepper.
