@@ -63,11 +63,23 @@ Si el enlace va a 10 Mbps o se cae cada pocos segundos, el cable está mal (ya p
 
 | Para | Dirección |
 |---|---|
-| Interfaz web (Mainsail) | **http://mk4.local** |
+| Interfaz web **Mainsail** | **http://mk4.local** |
+| Interfaz web **Fluidd** (alternativa, misma impresora) | **http://mk4.local:81** |
 | Terminal | `ssh antonio@mk4.local` |
 
 Usa siempre `mk4.local`: la IP cambia cuando el hotspot cambia de subred. Si `mk4.local` no
 resuelve, mira la IP de `mk4` en la lista de dispositivos del router/hotspot.
+
+Mainsail y Fluidd funcionan a la vez sobre la misma configuración: usa la que prefieras. Las dos
+se actualizan desde *Máquina → Actualizaciones*. Para quitar la que sobre, dímelo (o en la Pi:
+`sudo rm /etc/nginx/sites-enabled/fluidd && sudo systemctl reload nginx`).
+
+**La consola** (para escribir comandos, como el terminal de OctoPrint):
+- **Tab** completa el comando.
+- `HELP` lista todos los comandos con su descripción.
+- En Mainsail, el icono **"?"** de la consola abre esa lista con buscador: es lo más parecido
+  al plugin de documentación de comandos de OctoPrint.
+- `AYUDA_MARLIN` imprime la tabla de equivalencias de §5.4.
 
 ---
 
@@ -168,6 +180,41 @@ M907 Z1200 E800
 ```
 Valores de referencia: XY 850, Z 1200, E 800. No se guarda: vuelve al valor de `printer.cfg`
 al reiniciar.
+
+### 5.4 Comandos de Marlin en Klipper
+
+Puedes seguir escribiendo los comandos de Marlin que conoces. Los básicos los entiende Klipper
+tal cual. Los demás están en `marlin_compat.cfg`: hacen lo equivalente y te dicen en la consola
+el comando de Klipper (`Klipper: ...`), para que lo vayas aprendiendo. En la consola,
+`AYUDA_MARLIN` muestra esta tabla.
+
+**Iguales que en Marlin:** `G0/G1`, `G4`, `G28`, `G90/G91`, `G92`, `M82/M83`, `M84`,
+`M104/M109/M105`, `M106/M107`, `M112`, `M114`, `M115`, `M117`, `M119`, `M204`, `M220/M221`,
+`M400`, `M907`.
+
+| Marlin | Qué hace en la MK4 | Comando de Klipper |
+|---|---|---|
+| `M500` | Explica cómo se guarda | `SAVE_CONFIG` (solo calibraciones; reinicia Klipper). Lo demás se edita en `printer.cfg` |
+| `M501` / `M502` | Explica | `FIRMWARE_RESTART` descarta cambios en vivo; no hay "valores de fábrica" aparte |
+| `M503` | Resumen de ajustes (pasos, velocidades, PID, PA, sonda, malla, shaper, corrientes) | — (Máquina → `printer.cfg`) |
+| `M92 E…` | Aplica E en vivo; X/Y/Z dice qué poner | `SET_EXTRUDER_ROTATION_DISTANCE` / `rotation_distance` |
+| `M201` / `M203` | Aceleración / velocidad máxima | `SET_VELOCITY_LIMIT ACCEL=` / `VELOCITY=` |
+| `M205` | Lo más parecido al jerk | `SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=` |
+| `M17` | Activa los motores | `SET_STEPPER_ENABLE STEPPER=… ENABLE=1` |
+| `G29` | Malla (con el diálogo de la sonda) | `BED_MESH_CALIBRATE` |
+| `M420 S1` / `S0` / `V` | Carga / quita / muestra la malla | `BED_MESH_PROFILE LOAD=default` / `BED_MESH_CLEAR` / `BED_MESH_OUTPUT` |
+| `M851` | Muestra el offset de la sonda | `PROBE_CALIBRATE` (+ `SAVE_CONFIG`) |
+| `G30` / `M48` | Un sondeo / repetibilidad (brazo bajado) | `PROBE` / `PROBE_ACCURACY` |
+| `M290 Z…` | Babystep | `SET_GCODE_OFFSET Z_ADJUST=… MOVE=1` |
+| `M303 S…` | PID del hotend | `PID_CALIBRATE HEATER=extruder TARGET=…` (+ `SAVE_CONFIG`) |
+| `M301` | Muestra el PID | — |
+| `M900 K…` | Pressure advance (= linear advance) | `SET_PRESSURE_ADVANCE ADVANCE=…` |
+| `M600` | Pausa con diálogo para cambiar filamento | `PAUSE` … `RESUME` |
+| `M108` | Continúa: la sonda si espera, o la pausa | `SONDA_LISTA` / `RESUME` |
+
+Solo de Klipper y útiles: `HELP`, `STATUS`, `GET_POSITION`, `QUERY_PROBE`, `FIRMWARE_RESTART`
+(tras un error o un `M112`), `SHAPER_CALIBRATE`, `HOME_ACCEL`. Referencia completa:
+[G-codes de Klipper](https://www.klipper3d.org/G-Codes.html).
 
 ---
 
@@ -348,6 +395,8 @@ Resultados de referencia (2026-11-21, 15 mm/s):
 |---|---|
 | `klipper-config/mk4/printer.cfg` | máquina: ejes, hotend, sonda, malla, `max_accel`, bloque `SAVE_CONFIG` |
 | `klipper-config/mk4/macros.cfg` | `G28`, sonda manual, `PRINT_START`/`PRINT_END`, `M907` |
+| `klipper-config/mk4/marlin_compat.cfg` | comandos de Marlin (`M500`, `M503`, `G29`, `M851`, `M303`, `M900`, `M600`…) y `AYUDA_MARLIN` |
+| `klipper-config/mk4/moonraker.conf` | Moonraker: actualizaciones de Mainsail, Fluidd y Klipper |
 | `klipper-config/mk4/sensors.cfg` | MCU `rpi`, acelerómetro, `[resonance_tester]`, `[accel_endstop]` |
 | `klipper-config/mk4/extras/` | `adxl345_i2c.py` (ADXL por I2C), `accel_endstop.py` (homing por choque), `adxl345_3w.py` (SPI 3 hilos, sin usar), `dht_iio.py` (sensor ambiente, sin cablear) |
 | `klipper-config/mk4/host/` | servicio de red `mk4-red` y plantilla `mk4-red.txt` |
