@@ -172,9 +172,8 @@ Instalación (ya hecha): `install -m755 mk4-red.py /usr/local/sbin/mk4-red`, el 
 
 **Antes**, billete de vuelta:
 - Copia completa de la microSD de la placa (lleva `eeprom.dat` de Marlin).
-- El `mksLite.bin` Marlin vigente está en `repos/EasyThreeD-K9_ET4000PLUS`, rama
-  `custom-et4000plus`, `config/EasyThreeD/ET4000PLUS/mksLite.bin`. (Hay cambios sin commitear
-  en `Configuration*.h` de esa rama: commitear o descartar antes.)
+- El `mksLite.bin` Marlin de la MK3 está en la rama `mk3-marlin` de este repo,
+  `config/EasyThreeD/ET4000PLUS/mksLite.bin` (el CI lo recompila en cada push a esa rama).
 - **Medir Vref** de los drivers X, Z y E con Marlin funcionando y apuntarlo (referencia §6).
 
 En la Pi:

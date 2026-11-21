@@ -5,9 +5,10 @@
 
 ## Resumen en una línea
 
-Frankenprinter: fusionar el **cabezal de una EasyThreed K10** + la **mecánica de un CNC casero**
-(Arduino Uno + CNC Shield V3) bajo **Klipper multi-MCU** desde una Raspberry Pi. Repo público:
-<https://github.com/aorizondo/EasyThreed-K10-Klipper>.
+Función extra de la frankenprinter: fusionar el **cabezal de una EasyThreed K10** + la **mecánica
+de un CNC casero** (Arduino Uno + CNC Shield V3) bajo **Klipper multi-MCU** desde una Raspberry Pi.
+Repo: <https://github.com/aorizondo/frankenprinter>. El hack USB de la K10 (soldadura, flasheo, CI)
+está en <https://github.com/aorizondo/EasyThreed-K9-K10> (`klipper/k10`).
 
 ## Hardware confirmado (con correcciones al plan original)
 
