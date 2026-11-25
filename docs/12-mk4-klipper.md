@@ -250,6 +250,9 @@ Mano en el interruptor de corriente. Hasta el paso 5, **nada de G28**.
 - Al acabar el sondeo pide subir el brazo → `Recogida` = `SONDA_GUARDADA`.
 - `BED_MESH_CALIBRATE` igual. `PRINT_START` aborta si la sonda figura desplegada o falta homing.
 - Los diálogos usan `action:prompt_*`: los muestran Mainsail, Fluidd y OctoPrint.
+- **Alternativa experimental**: sonda por toque de boquilla con el ADXL (`extras/accel_probe.py`,
+  `probe_accel.cfg`). Se elige con un `[include]` en `printer.cfg`; con ella `G28`/malla no muestran
+  diálogos. Procedimiento de prueba: docs/13 §7.5. Test offline: `klipper-config/mk4/test/smoke.sh`.
 
 ---
 

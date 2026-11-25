@@ -355,6 +355,68 @@ Resultados de referencia (2026-11-21, 15 mm/s):
   carrera (X en `PC13`, Y en `PC0`, ajustados para activarse al tocar el marco) y en
   `macros.cfg` cambia en la macro `G28` la línea `HOME_ACCEL AXIS=…` por
   `G28.1 {"X" if hx else ""} {"Y" if hy else ""}`.
+- Con la sonda de boquilla (§7.5) activa, **Z tampoco**: vuelve a `probe_manual.cfg`.
+
+### 7.5 Sonda Z por toque de boquilla (EXPERIMENTAL, sin probar en la máquina)
+
+La **boquilla hace de sonda**: la cama sube hasta tocarla y el ADXL nota el toque (eje Z del
+chip → INT1, el mismo pin del homing X/Y). Sin brazo que bajar: `G28` y la malla van solos, y
+mide justo debajo de la boquilla (sin offset X/Y). Código: `extras/accel_probe.py`; config:
+`probe_accel.cfg`. Probado solo en simulación (`klipper-config/mk4/test/smoke.sh`).
+
+**Antes de nada:**
+- **Boquilla limpia**: una gota de plástico falsea la medida. Sondea con el hotend a ~150 °C
+  (el plástico se ablanda sin gotear) o en frío tras limpiarla.
+- **Mano en el interruptor** en todas las pruebas: si no detecta el toque, la cama empuja la
+  boquilla. En `probe_accel.cfg` el recorrido de más está limitado (`position_min: -0.5`) y
+  puedes bajar la corriente de Z al sondear (`z_current`).
+- Si en el bloque `#*# SAVE_CONFIG` del final de `printer.cfg` hay un `#*# [probe]` (de un
+  `PROBE_CALIBRATE` con la sonda manual), Klipper dirá *Printer object 'probe' already created*:
+  cámbialo a `#*# [accel_probe]` a mano esa única vez, o bórralo.
+
+**Activar** (en `printer.cfg`, sección *Sonda Z*): comenta `[include probe_manual.cfg]`, quita
+el `#` de `[include probe_accel.cfg]` y `FIRMWARE_RESTART`. Para volver, al revés.
+
+**Puesta a punto, en este orden:**
+
+1. **Ruido de la cama sin tocar nada.** Con la boquilla bien separada de la cama (varios cm):
+   ```
+   G28 X Y
+   SET_KINEMATIC_POSITION Z=0
+   G1 Z15 F300
+   ACCEL_NOISE_TEST AXIS=Z START=15 END=3
+   ```
+   `SET_KINEMATIC_POSITION Z=0` toma la altura actual como 0; la prueba sube y baja la cama
+   entre 15 y 3 mm *por debajo* de ahí, sin llegar a la boquilla. Prueba 0.125 / 0.25 / 0.5 /
+   1 / 2 g. El umbral mínimo sin falsos disparos es el suelo: pon `threshold` en
+   `probe_accel.cfg` a **el doble** de ese valor.
+2. **Primer toque, con el recorrido acotado.** `SET_KINEMATIC_POSITION Z=50` (altura ficticia
+   para poder subir la cama) y súbela a pasos (`G91`, `G1 Z-1 F300` varias veces, `G90`, o los
+   botones de Mainsail) hasta dejar ~3 mm entre boquilla y cama. Entonces:
+   ```
+   SET_KINEMATIC_POSITION Z=3
+   PROBE
+   ```
+   Como mucho sube 3.5 mm. Debe pararse al tocar y responder `Result: … contact at z=…`
+   (≈ 0 si los 3 mm eran exactos). Si toca y sigue empujando: corta la corriente y baja el
+   umbral. Si se para antes de tocar: falso disparo, sube el umbral. Para probar umbrales sin
+   editar: `PROBE TAP_THRESHOLD=0.3`.
+3. **Repetibilidad:** `PROBE_ACCURACY SAMPLES=10` (sigue con el Z provisional). Bien si el
+   rango es **< 0.02 mm**; compáralo con el de la sonda manual (`M48` / `PROBE_ACCURACY` con
+   `probe_manual.cfg`).
+4. **Homing:** `G28` completo (ya hace Z con la boquilla en el centro del plato).
+5. **Altura:** `PROBE_CALIBRATE` (prueba del papel: `TESTZ Z=-0.05`… hasta que roce, `ACCEPT`) y
+   `SAVE_CONFIG`. El `z_offset` se guarda en `[accel_probe]`, aparte del de la sonda manual.
+6. **Malla:** `BED_MESH_CALIBRATE` → `BED_MESH_PROFILE SAVE=default` → `SAVE_CONFIG`.
+
+| Opción (`probe_accel.cfg`) | Valor | Qué hace |
+|---|---|---|
+| `threshold` | 0.5 g | umbral del toque (calibrar en el paso 1) |
+| `blank_time` | 0.15 s | no vigila al empezar a subir la cama |
+| `settle_time` | 0.3 s | espera antes de cada toque para que se calme el cabezal |
+| `z_current` | (apagado) | amperios en Z al sondear; menos fuerza si no detecta (normal: 1.2) |
+| `speed` | 3 mm/s | velocidad de subida al tocar (más rápido = toque más fuerte) |
+| `[stepper_z] position_min` | −0.5 | cuánto puede pasarse por debajo de 0 |
 
 ---
 

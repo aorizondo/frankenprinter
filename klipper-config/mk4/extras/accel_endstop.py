@@ -28,8 +28,10 @@
 # ACCEL_CRASH_TEST AXIS=X|Y [SAMPLES=5]
 #   repeatability: HOME_ACCEL, then crash again from position_endstop+15 and
 #   report where it triggers (ideal: +0.000 every time).
-# ACCEL_NOISE_TEST AXIS=X|Y START= END= [SPEED=] [THRESHOLDS=1.5,2,3,...]
+# ACCEL_NOISE_TEST AXIS=X|Y|Z START= END= [SPEED=] [THRESHOLDS=1.5,2,3,...]
 #   free move (no crash) per threshold: the lowest "clean" one is usable.
+#   AXIS=Z measures bed-move noise for the nozzle-tap probe (accel_probe.py,
+#   which reuses this object's INT1 endstop with the chip Z axis).
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
@@ -131,9 +133,11 @@ class AccelEndstop:
             self.chip.read_reg(REG_INT_SOURCE)
         except self.printer.command_error as e:
             logging.warning("accel_endstop: disarm failed: %s", e)
-    def _schedule_enable(self, start_print_time):
+    def _schedule_enable(self, start_print_time, blank_time=None):
+        if blank_time is None:
+            blank_time = self.blank_time
         mcu = self.mcu_endstop.get_mcu()
-        arm_at = start_print_time + self.blank_time
+        arm_at = start_print_time + blank_time
         def arm_cb(eventtime):
             if mcu.estimated_print_time(eventtime) < arm_at:
                 return eventtime + 0.002
@@ -168,20 +172,24 @@ class AccelEndstop:
     def cmd_ACCEL_NOISE_TEST(self, gcmd):
         # Axis must be homed (HOME_ACCEL, even if approximate); START/END
         # must be well inside the travel: this move should NOT trigger.
+        # AXIS=Z moves the bed (no contact): noise floor for [accel_probe].
         axis_name = gcmd.get('AXIS').lower()
-        if axis_name not in ('x', 'y'):
-            raise gcmd.error("AXIS must be X or Y")
+        if axis_name not in ('x', 'y', 'z'):
+            raise gcmd.error("AXIS must be X, Y or Z")
         axis = "xyz".index(axis_name)
+        is_z = axis_name == 'z'
         start = gcmd.get_float('START')
         end = gcmd.get_float('END')
-        speed = gcmd.get_float('SPEED', self.speed, above=0., maxval=80.)
+        speed = gcmd.get_float('SPEED', 3. if is_z else self.speed, above=0.,
+                               maxval=80.)
+        default_thr = '0.125,0.25,0.5,1,2' if is_z else '1.5,2,3,4,6,8'
         thresholds = [float(t) for t in
-                      gcmd.get('THRESHOLDS', '1.5,2,3,4,6,8').split(',')]
+                      gcmd.get('THRESHOLDS', default_thr).split(',')]
         toolhead = self.printer.lookup_object('toolhead')
         for thr in thresholds:
             pos = toolhead.get_position()
             pos[axis] = start
-            toolhead.manual_move(pos, 50.)
+            toolhead.manual_move(pos, 10. if is_z else 50.)
             toolhead.wait_moves()
             trig, thresh_g, chip_axis = self._crash(
                 axis, end, speed, thr, check_triggered=False)

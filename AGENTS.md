@@ -48,6 +48,11 @@ Validar con Antonio antes de mover cosas entre ellos (referencias cruzadas frág
 - Firmware de la Robin Lite: se compila **en la Pi** con el parche `firmware/mk4/robin-lite-vectors-first.patch`
   (docs/12 §5). Sin parche el bootloader rechaza Klipper ≥ v0.11.
 - Gotcha Klipper: nombres de comando con letra+dígito al principio (`G28_ACCEL`, `M907_X`) son inválidos.
+- Sonda Z: `printer.cfg` incluye **una** de `probe_manual.cfg` (brazo PB9, la vigente) o `probe_accel.cfg`
+  (toque de boquilla + ADXL, `extras/accel_probe.py`, EXPERIMENTAL, docs/13 §7.5). Macros detectan cuál
+  con `'accel_probe' in printer.configfile.settings`.
+- Test offline de config+extras (batch Klipper, ADXL falso): `klipper-config/mk4/test/smoke.sh`. Pasarlo
+  antes de subir cambios de `extras/` o macros a la Pi.
 
 ## MK4 — hechos de hardware (no deducibles del código)
 
