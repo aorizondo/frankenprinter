@@ -16,7 +16,7 @@ git -C "$KL" cat-file -e "$COMMIT^{commit}" 2>/dev/null || git -C "$KL" fetch -q
 rm -rf "$WT"; git -C "$KL" worktree prune; git -C "$KL" worktree add -q --detach "$WT" "$COMMIT"
 trap 'git -C "$KL" worktree remove --force "$WT"' EXIT
 (cd "$WT" && printf 'CONFIG_MACH_LINUX=y\n' > .config && make -s olddefconfig >/dev/null && make -s -j8 >/dev/null)
-cp "$MK4"/extras/*.py "$HERE/fake_accel.py" "$WT/klippy/extras/"
+cp "$MK4"/extras/*.py "$HERE/fake_accel.py" "$ROOT/repos/Klipper-BoostKit/klipper/boostkit.py" "$WT/klippy/extras/"
 W="$WT/t"; mkdir -p "$W"; cp "$MK4"/{macros,marlin_compat,probe_accel,tramado}.cfg "$HERE"/*.gcode "$W/"
 sed 's/\^PB9/^gpio22/' "$MK4/probe_manual.cfg" > "$W/probe_manual_test.cfg"
 { cat "$HERE/base.cfg"; echo "[include probe_accel.cfg]"; cat "$HERE/tail.cfg"; } > "$W/accel.cfg"
@@ -24,9 +24,10 @@ sed 's/\^PB9/^gpio22/' "$MK4/probe_manual.cfg" > "$W/probe_manual_test.cfg"
 fail=0
 for t in accel manual; do
   (cd "$W" && timeout 240 "$PY" ../klippy/klippy.py $t.cfg -i $t.gcode -o $t.serial \
-     -d ../out/klipper.dict -d rpi=../out/klipper.dict -l $t.log >/dev/null 2>&1) || true
-  errs=$(grep -c "Error evaluating\|Traceback\|Config error\|Internal error" "$W/$t.log" || true)
+     -d ../out/klipper.dict -d rpi=../out/klipper.dict -l $t.log >$t.out 2>&1) || true
+  errs=$(grep -c "Error evaluating\|Traceback\|Config error\|Internal error\|Unknown command" "$W/$t.log" || true)
   echo "== $t: $errs errores"; [ "$errs" = 0 ] || { grep -m5 -A3 "Error\|Traceback" "$W/$t.log"; fail=1; }
-  grep -E "^(HOME_ACCEL|Result:|.*adjust (CW|CCW)|.*\(base\)|!! |// Tramado|Haz G28|probe accuracy results|Mesh Bed Leveling Complete|[0-9.]+ g:)" "$W/$t.log" | cut -c1-150
+  grep -E "^(BK |HOME_ACCEL|Result:|.*adjust (CW|CCW)|.*\(base\)|!! |// Tramado|Haz G28|probe accuracy results|Mesh Bed Leveling Complete|[0-9.]+ g:)" "$W/$t.log" | cut -c1-150
 done
+cp "$W"/*.log "${SMOKE_LOGS:-/tmp}/" 2>/dev/null || true
 exit $fail

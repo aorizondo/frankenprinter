@@ -74,6 +74,7 @@ class AccelEndstop:
                                           maxval=20.)
         self.chip = None
         self.arm_timer = None
+        self._bk_suspended = False
         self.printer.register_event_handler('klippy:mcu_identify',
                                             self._handle_mcu_identify)
         self.printer.register_event_handler('klippy:connect',
@@ -102,7 +103,19 @@ class AccelEndstop:
     def _pause(self, secs):
         self.reactor.pause(self.reactor.monotonic() + secs)
     # Chip setup: measure at 3200 Hz with activity detection ready, INT off
+    def _bk_accel(self, suspend):
+        # Klipper-BoostKit streams this chip for its web chart: stop it
+        # before reprogramming the chip and restart it afterwards.
+        bk = self.printer.lookup_object('boostkit', None)
+        if bk is None or suspend == self._bk_suspended:
+            return
+        self._bk_suspended = suspend
+        if suspend:
+            bk.suspend_accel()
+        else:
+            bk.resume_accel()
     def _prepare(self, axis, threshold):
+        self._bk_accel(True)
         chip = self.chip
         chip_axis = chip.axes_map[axis][0]
         thresh = max(1, min(255, int(round(threshold / THRESH_G_PER_LSB))))
@@ -133,6 +146,7 @@ class AccelEndstop:
             self.chip.read_reg(REG_INT_SOURCE)
         except self.printer.command_error as e:
             logging.warning("accel_endstop: disarm failed: %s", e)
+        self._bk_accel(False)
     def _schedule_enable(self, start_print_time, blank_time=None):
         if blank_time is None:
             blank_time = self.blank_time
