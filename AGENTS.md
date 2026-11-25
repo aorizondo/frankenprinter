@@ -12,6 +12,8 @@ Repos hermanos (no confundir):
   Clon local: `repos/EasyThreed-K9-K10/`. Aquí NO va nada de la MK.
 - **`aorizondo/OctoPrint-BoostKit`** y **`aorizondo/OctoPrint-ZPreload`** — plugins OctoPrint.
   Clones locales: `repos/OctoPrint-BoostKit/`, `repos/OctoPrint-ZPreload/`.
+- **`aorizondo/Klipper-BoostKit`** — tablero visual de la MK4 (Vue 3 + Moonraker, nginx :82), port del
+  BoostKit a Klipper. Clon local: `repos/Klipper-BoostKit/` (tiene su AGENTS.md y simulador de Moonraker).
 
 ## Lee primero
 

@@ -12,7 +12,8 @@ hack USB de la K10) ve a **[aorizondo/EasyThreed-K9-K10](https://github.com/aori
 | **CNC** (función extra) | GRBL hoy / Klipper multi-MCU (plan) | CNC casero (Arduino Uno + CNC Shield, NEMA17 reciclados) y plan de fusión con el cabezal de una K10 | docs 00–11, `firmware/cnc/`, `klipper-config/` |
 
 Plugins de OctoPrint usados con la MK3 (Marlin): [OctoPrint-BoostKit](https://github.com/aorizondo/OctoPrint-BoostKit) y
-[OctoPrint-ZPreload](https://github.com/aorizondo/OctoPrint-ZPreload).
+[OctoPrint-ZPreload](https://github.com/aorizondo/OctoPrint-ZPreload). Con la MK4 (Klipper):
+[Klipper-BoostKit](https://github.com/aorizondo/Klipper-BoostKit), tablero visual junto a Mainsail/Fluidd.
 
 > Estado: I+D personal. La MK4 imprime con Klipper; el CNC funciona con GRBL; la fusión
 > K10+CNC está documentada pero aparcada.

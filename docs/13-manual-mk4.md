@@ -65,12 +65,15 @@ Si el enlace va a 10 Mbps o se cae cada pocos segundos, el cable está mal (ya p
 |---|---|
 | Interfaz web **Mainsail** | **http://mk4.local** |
 | Interfaz web **Fluidd** (alternativa, misma impresora) | **http://mk4.local:81** |
+| **BoostKit** (tablero visual: jog con teclado numérico, babystep, temperaturas, offsets…) | **http://mk4.local:82** (también en el menú de Mainsail) |
 | Terminal | `ssh antonio@mk4.local` |
 
 Usa siempre `mk4.local`: la IP cambia cuando el hotspot cambia de subred. Si `mk4.local` no
 resuelve, mira la IP de `mk4` en la lista de dispositivos del router/hotspot.
 
-Mainsail y Fluidd funcionan a la vez sobre la misma configuración: usa la que prefieras. Las dos
+Mainsail, Fluidd y BoostKit funcionan a la vez sobre la misma configuración: usa la que prefieras.
+BoostKit se instala con `deploy/install.sh` de [Klipper-BoostKit](https://github.com/aorizondo/Klipper-BoostKit)
+(pendiente en la MK4). Las dos
 se actualizan desde *Máquina → Actualizaciones*. Para quitar la que sobre, dímelo (o en la Pi:
 `sudo rm /etc/nginx/sites-enabled/fluidd && sudo systemctl reload nginx`).
 

@@ -33,5 +33,6 @@ full() {  # full <url> <dir>
 full git@github.com:aorizondo/EasyThreed-K9-K10.git       EasyThreed-K9-K10   # K9/K10 de serie
 full git@github.com:aorizondo/OctoPrint-BoostKit.git      OctoPrint-BoostKit
 full git@github.com:aorizondo/OctoPrint-ZPreload.git      OctoPrint-ZPreload
+full git@github.com:aorizondo/Klipper-BoostKit.git        Klipper-BoostKit
 
 echo "Hecho. Repos de referencia en: $ROOT/repos"
