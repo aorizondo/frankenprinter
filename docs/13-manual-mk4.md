@@ -134,11 +134,42 @@ Se hacen una vez (y se repiten tras cambios mecánicos). `SAVE_CONFIG` las guard
 | Precisión de la sonda | `PROBE_ACCURACY` (con el brazo bajado) | pendiente |
 | PID del hotend | `PID_CALIBRATE HEATER=extruder TARGET=210` → `SAVE_CONFIG` | pendiente (PID de Marlin) |
 | Extrusor | A 200 °C: marca 120 mm de filamento, `M83`, `G1 E100 F60`, mide lo que queda y corrige `rotation_distance` (`nuevo = actual × extruido_real / 100`) | pendiente |
+| Tramado (4 tornillos M3) | §4.1 — **antes** de la malla | pendiente (faltan las coordenadas de los tornillos) |
 | Malla de la cama | `BED_MESH_CALIBRATE` (pide la sonda) → `BED_MESH_PROFILE SAVE=default` → `SAVE_CONFIG` | pendiente |
 | Input shaper | §6.3 | **hecho** 2026-11-20 |
 | Homing por choque | §7 | **hecho** 2026-11-21 |
 
 `BED_MESH_CALIBRATE` usa el mismo diálogo de la sonda que `G28`.
+
+### 4.1 Tramado de la cama (4 tornillos M3)
+
+Deja la cama paralela al recorrido de la boquilla girando sus 4 tornillos. Hazlo **antes** de
+la malla: la malla solo corrige lo que queda. Config: `klipper-config/mk4/tramado.cfg`.
+
+> Hasta medir las posiciones reales de los tornillos, los dos comandos responden
+> *Tramado sin configurar* (las coordenadas de `tramado.cfg` son provisionales).
+
+**Con la sonda (recomendado)**: `SCREWS_TILT_CALCULATE` (o `G35`, como en Marlin).
+1. `G28`.
+2. `SCREWS_TILT_CALCULATE`. Con la sonda manual sale el diálogo de bajar el brazo, como en la
+   malla. Mide junto a cada tornillo y responde, tomando como referencia el delantero izquierdo:
+   ```
+   delante-der : x=…, y=…, z=… : adjust CW 00:15
+   ```
+   `CW 00:15` = gira **en sentido horario un cuarto de vuelta** (00:15 son 15 minutos de reloj;
+   01:00 = una vuelta = 0.5 mm con M3). `CCW` = antihorario. En el tornillo de referencia no se toca.
+3. Gira cada tornillo lo indicado y repite el paso 2 hasta que todos den `00:00`–`00:03`
+   (no hace falta `G28` entre pasadas, el de referencia no se mueve).
+4. La primera vez comprueba el sentido: si tras girar el error crece en vez de bajar, cambia
+   `screw_thread: CW-M3` por `CCW-M3` en los dos `probe_*.cfg`.
+5. Al terminar: `PROBE_CALIBRATE` si cambió mucho la altura, y luego la malla.
+
+Mainsail y Fluidd muestran el resultado también en un cuadro.
+
+**Sin sonda (prueba del papel)**: `BED_SCREWS_ADJUST` (el *Level corners* de Marlin). Con la
+sonda manual, el brazo **subido** (`SONDA_GUARDADA`). La boquilla va a Z=0 sobre cada tornillo:
+ajusta hasta que el papel roce y responde `ACCEPT` (estaba bien) o `ADJUSTED` (lo has tocado). Si
+alguno fue `ADJUSTED`, vuelve a empezar la ronda sola. `ABORT` para salir.
 
 ---
 
@@ -202,6 +233,8 @@ el comando de Klipper (`Klipper: ...`), para que lo vayas aprendiendo. En la con
 | `M205` | Lo más parecido al jerk | `SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=` |
 | `M17` | Activa los motores | `SET_STEPPER_ENABLE STEPPER=… ENABLE=1` |
 | `G29` | Malla (con el diálogo de la sonda) | `BED_MESH_CALIBRATE` |
+| `G35` | Tramado: cuánto girar cada tornillo (§4.1) | `SCREWS_TILT_CALCULATE` |
+| *Level corners* (pantalla) | Tramado con papel (§4.1) | `BED_SCREWS_ADJUST` |
 | `M420 S1` / `S0` / `V` | Carga / quita / muestra la malla | `BED_MESH_PROFILE LOAD=default` / `BED_MESH_CLEAR` / `BED_MESH_OUTPUT` |
 | `M851` | Muestra el offset de la sonda | `PROBE_CALIBRATE` (+ `SAVE_CONFIG`) |
 | `G30` / `M48` | Un sondeo / repetibilidad (brazo bajado) | `PROBE` / `PROBE_ACCURACY` |
@@ -426,7 +459,7 @@ el `#` de `[include probe_accel.cfg]` y `FIRMWARE_RESTART`. Para volver, al rev�
 |---|---|
 | Correas, poleas, carro | §7.3 (umbrales), §6.3 (shaper) |
 | Montaje o módulo del ADXL | §6.2 (comprobar y orientación), §7.3, §6.3 |
-| Boquilla, sonda, cama | `PROBE_CALIBRATE`, malla |
+| Boquilla, sonda, cama | tramado (§4.1), `PROBE_CALIBRATE`, malla |
 | Hotend, termistor | `PID_CALIBRATE` |
 | Extrusor | `rotation_distance` del extrusor |
 | Velocidad de homing (`speed`) | §7.3 (los umbrales dependen de ella) |
@@ -457,10 +490,12 @@ el `#` de `[include probe_accel.cfg]` y `FIRMWARE_RESTART`. Para volver, al rev�
 |---|---|
 | `klipper-config/mk4/printer.cfg` | máquina: ejes, hotend, sonda, malla, `max_accel`, bloque `SAVE_CONFIG` |
 | `klipper-config/mk4/macros.cfg` | `G28`, sonda manual, `PRINT_START`/`PRINT_END`, `M907` |
-| `klipper-config/mk4/marlin_compat.cfg` | comandos de Marlin (`M500`, `M503`, `G29`, `M851`, `M303`, `M900`, `M600`…) y `AYUDA_MARLIN` |
+| `klipper-config/mk4/marlin_compat.cfg` | comandos de Marlin (`M500`, `M503`, `G29`, `G35`, `M851`, `M303`, `M900`, `M600`…) y `AYUDA_MARLIN` |
+| `klipper-config/mk4/probe_manual.cfg` / `probe_accel.cfg` | sonda Z (una de las dos) y sus coordenadas de tramado |
+| `klipper-config/mk4/tramado.cfg` | tornillos de la cama: `BED_SCREWS_ADJUST`, envoltorio de `SCREWS_TILT_CALCULATE` |
 | `klipper-config/mk4/moonraker.conf` | Moonraker: actualizaciones de Mainsail, Fluidd y Klipper |
 | `klipper-config/mk4/sensors.cfg` | MCU `rpi`, acelerómetro, `[resonance_tester]`, `[accel_endstop]` |
-| `klipper-config/mk4/extras/` | `adxl345_i2c.py` (ADXL por I2C), `accel_endstop.py` (homing por choque), `adxl345_3w.py` (SPI 3 hilos, sin usar), `dht_iio.py` (sensor ambiente, sin cablear) |
+| `klipper-config/mk4/extras/` | `adxl345_i2c.py` (ADXL por I2C), `accel_endstop.py` (homing por choque), `accel_probe.py` (sonda de boquilla, §7.5), `adxl345_3w.py` (SPI 3 hilos, sin usar), `dht_iio.py` (sensor ambiente, sin cablear) |
 | `klipper-config/mk4/host/` | servicio de red `mk4-red` y plantilla `mk4-red.txt` |
 | En la Pi | `~/printer_data/config/` (copia de lo anterior; los `extras/` van enlazados en `~/klipper/klippy/extras/`) |
 
