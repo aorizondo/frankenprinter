@@ -160,8 +160,9 @@ la malla: la malla solo corrige lo que queda. Config: `klipper-config/mk4/tramad
    01:00 = una vuelta = 0.5 mm con M3). `CCW` = antihorario. En el tornillo de referencia no se toca.
 3. Gira cada tornillo lo indicado y repite el paso 2 hasta que todos den `00:00`–`00:03`
    (no hace falta `G28` entre pasadas, el de referencia no se mueve).
-4. La primera vez comprueba el sentido: si tras girar el error crece en vez de bajar, cambia
-   `screw_thread: CW-M3` por `CCW-M3` en los dos `probe_*.cfg`.
+4. Sentido comprobado en la MK4: **horario (CW) acerca la cama a la boquilla** =
+   `screw_thread: CW-M3`. Si algún día cambias tornillos o tuercas y el error crece al girar
+   como indica, pasa a `CCW-M3` en los dos `probe_*.cfg`.
 5. Al terminar: `PROBE_CALIBRATE` si cambió mucho la altura, y luego la malla.
 
 Mainsail y Fluidd muestran el resultado también en un cuadro.
